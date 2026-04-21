@@ -6,20 +6,55 @@ from adafruit_bitmap_font import bitmap_font
 
 BLACK = 0x000000
 
+class MainTemp:
+    def __init__(self, fontmain=None, fontother=None):
+        self.fontmain = fontmain or terminalio.FONT
+        self.fontother = fontother or terminalio.FONT
+
+        #Main Temp
+        self.now = label.Label(self.fontmain, text = "--°F", color=BLACK)
+        self.high = label.Label(self.fontother, text = "--°F", color=BLACK)
+        self.low = label.Label(self.fontother, text = "--°F", color=BLACK)
+        self.divider = label.Label(self.fontother, text = "/", color=BLACK)
+
+        self.now.x = 33
+        self.now.y = 90
+        
+        self.high.x = 15
+        self.high.y = 100
+
+        self.low.x = 55
+        self.low.y = 100
+
+        self.divider.x = 45
+        self.divider.y = 100
+
+        self.group = displayio.Group()
+        self.group.append(self.now)
+        self.group.append(self.high)
+        self.group.append(self.low)
+        self.group.append(self.divider)
+
+    def update(self, tnow, thigh, tlow):
+        self.now.text = f"{tnow}°F"
+        self.high.text = f"{thigh}°F"
+        self.low.text = f"{tlow}°F"
+
+
 class Labels:
     def __init__(self, font=None):
         #set font or fallback to terminalio
         self.font = font or terminalio.FONT
         
         #temp label
-        self.temp   = label.Label(self.font, text = "--°F", color=BLACK)
-        self.temp.x = 50
-        self.temp.y = 100
+        self.temp   = label.Label(self.font, text = "--°F", color=BLACK, line_spacing=1)
+        self.temp.x = 120
+        self.temp.y = 90
 
         #humidity label
         self.humi   = label.Label(self.font, text = "--%", color=BLACK)
-        self.humi.x = 50
-        self.humi.y = 120
+        self.humi.x = 120
+        self.humi.y = 101
 
         #Labels group
         self.group = displayio.Group()
