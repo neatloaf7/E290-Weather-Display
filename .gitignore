@@ -3,5 +3,6 @@ fonts/
 images/
 settings.toml
 .vscode/
-
+BOOTEX.LOG
+boot_out.txt
 
