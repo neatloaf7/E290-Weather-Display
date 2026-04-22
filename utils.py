@@ -1,6 +1,8 @@
 import json
 import os
 
+ICON_TABLE = [list(range(0,9)), list(range(10,19)), list(range(20,21))]
+
 def get_weather(requests):
     print("Connecting...")
     

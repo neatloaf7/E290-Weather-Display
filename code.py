@@ -10,7 +10,7 @@ import time
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes import line
-from classes import Labels, StatusLabels, MainTemp, MainSprites
+from classes import Labels, StatusLabels, MainTemp, MainBlock
 import adafruit_requests
 import adafruit_connection_manager
 import utils
@@ -22,7 +22,6 @@ print(f"Connected to {wifi.radio.ipv4_address} !")
 pool = adafruit_connection_manager.get_radio_socketpool(wifi.radio)
 
 requests = adafruit_requests.Session(pool)
-
 weather = utils.get_weather(requests)
 print(f"{weather['latitude']}")
 
@@ -39,8 +38,7 @@ font2 = bitmap_font.load_font("fonts/UAV-OSD-Mono-14.bdf")
 
 #Create 12 pt font labels (currently temp and humidity)
 labels = Labels(font1)
-status = StatusLabels()
-main = MainTemp(font2, font1)
+
 
 #Create white background
 background_bitmap = displayio.Bitmap(296, 128, 1)
@@ -55,24 +53,26 @@ splash.append(t)
 topbar  = line.Line(x0=0, x1=295, y0=11, y1=11, color=BLACK)
 divider = line.Line(x0=99, x1=99, y0=11, y1=127, color=BLACK)
 
-sprites = MainSprites("/img/sprites.bmp", "/img/smlsprites.bmp")
+main_block = MainBlock("/img/sprites.bmp", "/fonts/Ari-W9500-11.bdf","fonts/UAV-OSD-Mono-14.bdf")
 
 #append labels
 splash.append(labels.group)
-splash.append(status.group)
-splash.append(sprites.group)
+
+splash.append(main_block.group)
 splash.append(divider)
 splash.append(topbar)
-splash.append(main.group)
+
 
 # Show it
 display.root_group = splash
 
 labels.update(temp=70, humi=45)
-main.update(
+main_block.update(1, 3,
     int(weather['current']['temperature_2m']), 
     int(weather['daily']['temperature_2m_max'][0]), 
-    int(weather['daily']['temperature_2m_min'][0])
+    int(weather['daily']['temperature_2m_min'][0]),
+    0,
+    0,
 )
 
 display.refresh()

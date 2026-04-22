@@ -1,49 +1,18 @@
 import displayio
 import terminalio
+import utils
 
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
 
 BLACK = 0x000000
 
-class MainTemp:
-    def __init__(self, fontmain=None, fontother=None):
-        self.fontmain = fontmain or terminalio.FONT
-        self.fontother = fontother or terminalio.FONT
-
-        #Main Temp
-        self.now = label.Label(self.fontmain, text = "--°F", color=BLACK)
-        self.high = label.Label(self.fontother, text = "--°F", color=BLACK)
-        self.low = label.Label(self.fontother, text = "--°F", color=BLACK)
-        self.divider = label.Label(self.fontother, text = "/", color=BLACK)
-
-        self.now.x = 28
-        self.now.y = 88
-        
-        self.high.x = 15
-        self.high.y = 105
-
-        self.low.x = 55
-        self.low.y = 105
-
-        self.divider.x = 45
-        self.divider.y = 105
-
+class MainBlock:
+    def __init__(self, path72, font0=None, font1=None):
         self.group = displayio.Group()
-        self.group.append(self.now)
-        self.group.append(self.high)
-        self.group.append(self.low)
-        self.group.append(self.divider)
+        self.fontmain = font0 or terminalio.FONT
+        self.fontalt = font1 or terminalio.FONT
 
-    def update(self, tnow, thigh, tlow):
-        self.now.text = f"{tnow}°F"
-        self.high.text = f"{thigh}°F"
-        self.low.text = f"{tlow}°F"
-
-class MainSprites:
-    sprite_table = [list(range(0,9)), list(range(10,19)), list(range(20,21))]
-    def __init__(self, path72, path48):
-        self.group = displayio.Group()
 
         #main icon setup
         bmp72 = displayio.OnDiskBitmap(path72)
@@ -56,8 +25,51 @@ class MainSprites:
                                  tile_height=72,
                                  default_tile = 0,
                                  x=10,y=12)
-        self.group.append(self.main_icon)
+        self.group.append(self.main_icon)  
+        self.main_icon[0] = utils.ICON_TABLE[1][4]
+
+        #text setup
+        self.now = label.Label(self.fontother, text = "--°F", color=BLACK)
+        self.high = label.Label(self.fontmain, text = "--°F", color=BLACK)
+        self.low = label.Label(self.fontmain, text = "--°F", color=BLACK)
+        self.divider = label.Label(self.fontmain, text = "/", color=BLACK)
+
+        self.now.x = 28
+        self.now.y = 88
+        self.high.x = 15
+        self.high.y = 105
+        self.low.x = 55
+        self.low.y = 105
+        self.divider.x = 45
+        self.divider.y = 105
+
+        self.group.append(self.now)
+        self.group.append(self.high)
+        self.group.append(self.low)
+        self.group.append(self.divider)
+
+    def update(self, isday, wmo, t_now, t_hi, t_lo, humi, prec):
         
+        row = 1 - isday
+        col = wmo
+        #if wmo == 69-70:
+        #    disaster = True
+        #col = wmotable[wmo]
+        
+        #if disaster:
+        #    row = 2
+        #else:
+        #    row = 1 - isday
+        self.main_icon[0] = [row][col]
+
+        self.now.text = f"{t_now}°F"
+        self.high.text = f"{t_hi}°F"
+        self.low.text = f"{t_lo}°F"
+
+class ForecastWidget:
+    def __init__(self, path48):
+        self.group = displayio.Group()
+
         #small icon setup
         #Create an empty list for holding objects
         #Create 3 new tile grids with incrementing x position
@@ -78,10 +90,8 @@ class MainSprites:
             self.forecast_icons.append(grid)
             self.group.append(grid)
         
-        self.main_icon[0] = self.sprite_table[0][1]
-        self.forecast_icons[1][0] = self.sprite_table[1][4]
-
-
+        self.main_icon[0] = utils.ICON_TABLE[1][4]
+        self.forecast_icons[1][0] = utils.ICON_TABLE[1][5]
 
 class Labels:
     def __init__(self, font=None):
