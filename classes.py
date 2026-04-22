@@ -17,17 +17,17 @@ class MainTemp:
         self.low = label.Label(self.fontother, text = "--°F", color=BLACK)
         self.divider = label.Label(self.fontother, text = "/", color=BLACK)
 
-        self.now.x = 33
-        self.now.y = 90
+        self.now.x = 28
+        self.now.y = 88
         
         self.high.x = 15
-        self.high.y = 100
+        self.high.y = 105
 
         self.low.x = 55
-        self.low.y = 100
+        self.low.y = 105
 
         self.divider.x = 45
-        self.divider.y = 100
+        self.divider.y = 105
 
         self.group = displayio.Group()
         self.group.append(self.now)
@@ -39,6 +39,48 @@ class MainTemp:
         self.now.text = f"{tnow}°F"
         self.high.text = f"{thigh}°F"
         self.low.text = f"{tlow}°F"
+
+class MainSprites:
+    sprite_table = [list(range(0,9)), list(range(10,19)), list(range(20,21))]
+    def __init__(self, path72, path48):
+        self.group = displayio.Group()
+
+        #main icon setup
+        bmp72 = displayio.OnDiskBitmap(path72)
+        self.main_icon = displayio.TileGrid(
+                                 bmp72, 
+                                 pixel_shader=bmp72.pixel_shader,
+                                 width = 1,
+                                 height = 1,
+                                 tile_width=72,
+                                 tile_height=72,
+                                 default_tile = 0,
+                                 x=10,y=12)
+        self.group.append(self.main_icon)
+        
+        #small icon setup
+        #Create an empty list for holding objects
+        #Create 3 new tile grids with incrementing x position
+        #Append grids to list and self.group
+        bmp48 = displayio.OnDiskBitmap(path48)
+        self.forecast_icons = []
+        for i in range(3):
+            grid = displayio.TileGrid(
+                                 bmp48, 
+                                 pixel_shader=bmp48.pixel_shader,
+                                 width = 1,
+                                 height = 1,
+                                 tile_width=48,
+                                 tile_height=48,
+                                 default_tile = 0,
+                                 x=120 + (i*60),y=20
+                                 )
+            self.forecast_icons.append(grid)
+            self.group.append(grid)
+        
+        self.main_icon[0] = self.sprite_table[0][1]
+        self.forecast_icons[1][0] = self.sprite_table[1][4]
+
 
 
 class Labels:

@@ -1,7 +1,6 @@
 import os
 import board
 import displayio
-import storage
 import digitalio
 import terminalio
 import neopixel
@@ -11,7 +10,7 @@ import time
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes import line
-from classes import Labels, StatusLabels, MainTemp
+from classes import Labels, StatusLabels, MainTemp, MainSprites
 import adafruit_requests
 import adafruit_connection_manager
 import utils
@@ -36,7 +35,7 @@ BLACK = 0x000000
 #import fonts
 font0 = terminalio.FONT #small
 font1 = bitmap_font.load_font("/fonts/Ari-W9500-11.bdf")
-font2 = bitmap_font.load_font("fonts/Minecraftia-Regular-12.bdf")
+font2 = bitmap_font.load_font("fonts/UAV-OSD-Mono-14.bdf")
 
 #Create 12 pt font labels (currently temp and humidity)
 labels = Labels(font1)
@@ -56,49 +55,14 @@ splash.append(t)
 topbar  = line.Line(x0=0, x1=295, y0=11, y1=11, color=BLACK)
 divider = line.Line(x0=99, x1=99, y0=11, y1=127, color=BLACK)
 
+sprites = MainSprites("/img/sprites.bmp", "/img/smlsprites.bmp")
 
-#image test
-#bitmap = displayio.OnDiskBitmap("/img/wi-cloud.bmp")
-#bitpalette = bitmap.pixel_shader
-#bitpalette.make_transparent(1)
-#cloud = displayio.TileGrid(bitmap, pixel_shader=bitpalette)
-#cloud.x = 10
-#cloud.y = 12
-
-sprites_bmp = displayio.OnDiskBitmap("/img/sprites.bmp")
-bitpalette = sprites_bmp.pixel_shader
-bitpalette.make_transparent(1)
-
-sprites = displayio.TileGrid(sprites_bmp, pixel_shader=bitpalette,
-                                 width = 1,
-                                 height = 1,
-                                 tile_width=72,
-                                 tile_height=72,
-                                 default_tile = 0,
-                                 x=10,y=12)
-
-sprite_table = [list(range(0,9)), list(range(10,19)), list(range(20,21))]
-sprites[0] = sprite_table[0][7]
-
-smlsprites_bmp = displayio.OnDiskBitmap("img/smlsprites.bmp")
-smlsprites = displayio.TileGrid(smlsprites_bmp, pixel_shader=bitpalette,
-                                 width = 1,
-                                 height = 1,
-                                 tile_width=48,
-                                 tile_height=48,
-                                 default_tile = 0,
-                                 x=120,y=20
-                                 )
-
-smlsprites[0] = sprite_table[0][3]
 #append labels
 splash.append(labels.group)
 splash.append(status.group)
-
+splash.append(sprites.group)
 splash.append(divider)
 splash.append(topbar)
-splash.append(smlsprites)
-splash.append(sprites)
 splash.append(main.group)
 
 # Show it
