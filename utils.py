@@ -1,7 +1,9 @@
 import json
 import os
+import displayio
 
-ICON_TABLE = [list(range(0,9)), list(range(10,19)), list(range(20,21))]
+ICON_TABLE = [list(range(0,10)), list(range(10,20)), list(range(20,22))]
+bmp48 = displayio.OnDiskBitmap("/img/sprites48.bmp")
 
 def get_weather(requests):
     print("Connecting...")

@@ -1,6 +1,9 @@
 import displayio
 import terminalio
 import utils
+import bmps
+import time
+from adafruit_display_shapes import line
 
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
@@ -8,14 +11,14 @@ from adafruit_bitmap_font import bitmap_font
 BLACK = 0x000000
 
 class MainBlock:
-    def __init__(self, path72, font0=None, font1=None):
+    def __init__(self, font0=None, font1=None):
         self.group = displayio.Group()
         self.fontmain = font0 or terminalio.FONT
         self.fontalt = font1 or terminalio.FONT
 
 
         #main icon setup
-        bmp72 = displayio.OnDiskBitmap(path72)
+        bmp72 = displayio.OnDiskBitmap("/img/sprites.bmp")
         self.main_icon = displayio.TileGrid(
                                  bmp72, 
                                  pixel_shader=bmp72.pixel_shader,
@@ -28,8 +31,8 @@ class MainBlock:
         self.group.append(self.main_icon)  
         self.main_icon[0] = utils.ICON_TABLE[1][4]
 
-        #text setup
-        self.now = label.Label(self.fontother, text = "--°F", color=BLACK)
+        #temps setup
+        self.now = label.Label(self.fontalt, text = "--°F", color=BLACK)
         self.high = label.Label(self.fontmain, text = "--°F", color=BLACK)
         self.low = label.Label(self.fontmain, text = "--°F", color=BLACK)
         self.divider = label.Label(self.fontmain, text = "/", color=BLACK)
@@ -43,12 +46,45 @@ class MainBlock:
         self.divider.x = 45
         self.divider.y = 105
 
+        
+
+        #precipitation setup
+        self.prec_icon = displayio.TileGrid(
+                            bmps.prec,
+                            pixel_shader=bmps.prec.pixel_shader,
+                            x=5,y=107
+                        )
+        self.prec_label = label.Label(self.fontmain, text = "--%", color=BLACK)
+        self.prec_label.x = 25
+        self.prec_label.y = 120
+
+        
+        self.group.append(self.prec_icon)
+        self.group.append(self.prec_label)
+
+        #humidity setup
+        self.humi_icon = displayio.TileGrid(
+                            bmps.humi,
+                            pixel_shader=bmps.humi.pixel_shader,
+                            x=50,y=110
+                        )
+        self.humi_label = label.Label(self.fontmain, text = "--%", color=BLACK)
+        self.humi_label.x = 70
+        self.humi_label.y = 120
+
+        
+        self.group.append(self.humi_icon)
+        self.group.append(self.humi_label)
+
+        self.line = line.Line(x0=99, x1=99, y0=11, y1=127, color=BLACK)
+        self.group.append(self.line)
+
         self.group.append(self.now)
         self.group.append(self.high)
         self.group.append(self.low)
         self.group.append(self.divider)
 
-    def update(self, isday, wmo, t_now, t_hi, t_lo, humi, prec):
+    def update(self, isday, wmo, t_now, t_hi, t_lo, prec, humi):
         
         row = 1 - isday
         col = wmo
@@ -60,85 +96,133 @@ class MainBlock:
         #    row = 2
         #else:
         #    row = 1 - isday
-        self.main_icon[0] = [row][col]
+        self.main_icon[0] = utils.ICON_TABLE[row][col]
 
         self.now.text = f"{t_now}°F"
         self.high.text = f"{t_hi}°F"
         self.low.text = f"{t_lo}°F"
+        self.prec_label.text = f"{prec}%"
+        self.humi_label.text = f"{humi}%"
 
 class ForecastWidget:
-    def __init__(self, path48):
-        self.group = displayio.Group()
+    def __init__(self, font, x):
+        self.group = displayio.Group(x=x, y=0)
 
-        #small icon setup
-        #Create an empty list for holding objects
-        #Create 3 new tile grids with incrementing x position
-        #Append grids to list and self.group
-        bmp48 = displayio.OnDiskBitmap(path48)
-        self.forecast_icons = []
-        for i in range(3):
-            grid = displayio.TileGrid(
+        self.font = font or terminalio.FONT
+        bmp48 = displayio.OnDiskBitmap("/img/sprites48.bmp")
+
+        self.icon = displayio.TileGrid(
                                  bmp48, 
                                  pixel_shader=bmp48.pixel_shader,
-                                 width = 1,
-                                 height = 1,
+                                 width=1,
+                                 height=1,
                                  tile_width=48,
                                  tile_height=48,
-                                 default_tile = 0,
-                                 x=120 + (i*60),y=20
+                                 x=0,
+                                 y=30
                                  )
-            self.forecast_icons.append(grid)
-            self.group.append(grid)
         
-        self.main_icon[0] = utils.ICON_TABLE[1][4]
-        self.forecast_icons[1][0] = utils.ICON_TABLE[1][5]
+        self.icon[0] = utils.ICON_TABLE[0][9]
 
-class Labels:
-    def __init__(self, font=None):
-        #set font or fallback to terminalio
-        self.font = font or terminalio.FONT
-        
-        #temp label
-        self.temp   = label.Label(self.font, text = "--°F", color=BLACK, line_spacing=1)
-        self.temp.x = 120
-        self.temp.y = 90
+        self.temp = label.Label(self.font, text="--°F", x=12, y=84, color=BLACK)
 
-        #humidity label
-        self.humi   = label.Label(self.font, text = "--%", color=BLACK)
-        self.humi.x = 120
-        self.humi.y = 101
+        self.prec = label.Label(self.font, text="--%", x=15, y=102, color=BLACK)
+        self.prec_icon = displayio.TileGrid(
+                            bmps.prec,
+                            pixel_shader=bmps.prec.pixel_shader,
+                            x=-8,y=88)
 
-        #Labels group
-        self.group = displayio.Group()
+        self.humi = label.Label(self.font, text="--%", x=15, y=120, color=BLACK)
+        self.humi_icon = displayio.TileGrid(
+                            bmps.humi,
+                            pixel_shader=bmps.humi.pixel_shader,
+                            x=-6,y=108
+                        )              
+
+        self.time = label.Label(self.font, text="--:--", x=7, y=24, color=BLACK)
+
+        self.group.append(self.humi_icon)
+        self.group.append(self.prec_icon)
+        self.group.append(self.icon)
         self.group.append(self.temp)
+        self.group.append(self.prec)
         self.group.append(self.humi)
+        self.group.append(self.time)
 
-    def update(self, temp=None, humi=None):
-        if temp is not None:
-            self.temp.text = f"{temp}°F"
-        if humi is not None:
-            self.humi.text = f"{humi} %"
+    def update(self, isday, wmo, t, prec, humi, hour):
+        row = 1 - isday
+        col = wmo
 
-class StatusLabels:
+        self.icon[0] = utils.ICON_TABLE[row][col]
+        self.temp.text = f"{t}°F"
+        self.prec.text = f"{prec}%"
+        self.humi.text = f"{humi}%"
+        self.time.text = f"{hour}:00"
+
+
+
+class StatusBar:
     #tuples for date formatting
     WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
 
-    def __init__(self, time=None):
-        #FOR TESTING WITH NO TIME INPUT
-        self.time = time or (2025, 8, 7, 5, 20, 30)
-
-        #Last update time label
-        self.lastUpdate = label.Label(terminalio.FONT, text="", x=125, y=4, color=BLACK)
-        self.updateTime(self.time)
+    def __init__(self):
+        #make label
+        self.time = label.Label(terminalio.FONT, text=f"Sunday, 01 JAN 1970 00:00",
+                                                       x=125, y=4, color=BLACK)
 
         #Location Label
         self.loc = label.Label(terminalio.FONT, text = "San Diego, CA", color=BLACK, x=0, y=4)
+        self.topbar  = line.Line(x0=0, x1=295, y0=11, y1=11, color=BLACK)
 
         #Group
         self.group = displayio.Group()
-        self.group.append(self.lastUpdate)
+        self.group.append(self.time)
         self.group.append(self.loc)
+        self.group.append(self.topbar)
 
-    def updateTime(self, dt):
-        self.lastUpdate.text = f"{self.WEEKDAYS[dt[3]]}, {dt[2]:02d} {self.MONTHS[dt[1]-1]} {dt[0]} {dt[4]:02d}{dt[5]:02d}"
+    def update_time(self, iso_str):
+        self.year  = int(iso_str[0:4])
+        self.month = int(iso_str[5:7])
+        self.day   = int(iso_str[8:10])
+        self.hour  = int(iso_str[11:13])
+        self.minute = int(iso_str[14:16])
+
+        #tuple for getting weekday
+        t_tuple = (self.year, self.month, self.day, self.hour, self.minute, 0, -1, -1, -1)
+        timestamp = time.mktime(t_tuple)
+        full_dt = time.localtime(timestamp)
+        self.weekday_idx = full_dt.tm_wday
+
+        #Last update time label
+        self.time.text = (f"{self.WEEKDAYS[self.weekday_idx]}, "
+                        f"{iso_str[8:10]}  {self.MONTHS[self.month]} "
+                        f"{self.year} {self.hour}:{iso_str[14:16]}")
+
+class MainScreen:
+    def __init__(self, font0, font1):
+        self.group = displayio.Group()
+        
+        self.status = StatusBar()
+        self.group.append(self.status.group)
+
+        self.main_block = MainBlock(font0, font1)
+        self.group.append(self.main_block.group)
+
+        self.forecasts = []
+        for i in range(3):
+            w = ForecastWidget(font0, 120 + i*60)
+            self.forecasts.append(w)
+            self.group.append(w.group)
+
+    def update_forecasts(self, hour, hourly_data):
+        for i in range(3):
+            idx = hour + (i+1)*2
+
+            wmo = hourly_data['weather_code'][idx]
+            isday = hourly_data['is_day'][idx]
+            t = hourly_data['temperature_2m'][idx]
+            prec = hourly_data['precipitation_probability'][idx]
+            humi = hourly_data['relative_humidity_2m'][idx]
+
+            self.forecasts[i].update(isday, wmo, t, prec, humi, hourly_data['time'][idx][11:13])

@@ -10,7 +10,7 @@ import time
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes import line
-from classes import Labels, StatusLabels, MainTemp, MainBlock
+from classes import ForecastWidget, MainScreen
 import adafruit_requests
 import adafruit_connection_manager
 import utils
@@ -37,8 +37,6 @@ font1 = bitmap_font.load_font("/fonts/Ari-W9500-11.bdf")
 font2 = bitmap_font.load_font("fonts/UAV-OSD-Mono-14.bdf")
 
 #Create 12 pt font labels (currently temp and humidity)
-labels = Labels(font1)
-
 
 #Create white background
 background_bitmap = displayio.Bitmap(296, 128, 1)
@@ -49,32 +47,26 @@ palette[0] = 0xFFFFFF
 t = displayio.TileGrid(background_bitmap, pixel_shader=palette)
 splash.append(t)
 
-#lines
-topbar  = line.Line(x0=0, x1=295, y0=11, y1=11, color=BLACK)
-divider = line.Line(x0=99, x1=99, y0=11, y1=127, color=BLACK)
-
-main_block = MainBlock("/img/sprites.bmp", "/fonts/Ari-W9500-11.bdf","fonts/UAV-OSD-Mono-14.bdf")
+main_screen = MainScreen(font1,font2)
 
 #append labels
-splash.append(labels.group)
-
-splash.append(main_block.group)
-splash.append(divider)
-splash.append(topbar)
+splash.append(main_screen.group)
 
 
 # Show it
 display.root_group = splash
 
-labels.update(temp=70, humi=45)
-main_block.update(1, 3,
-    int(weather['current']['temperature_2m']), 
-    int(weather['daily']['temperature_2m_max'][0]), 
-    int(weather['daily']['temperature_2m_min'][0]),
-    0,
-    0,
+main_screen.main_block.update(int(weather['current']['is_day']),
+                    7,
+                    int(weather['current']['temperature_2m']), 
+                    int(weather['daily']['temperature_2m_max'][0]), 
+                    int(weather['daily']['temperature_2m_min'][0]),
+                    int(weather['daily']['precipitation_probability_max'][0]),
+                    int(weather['current']['relative_humidity_2m']),
 )
 
+main_screen.update_forecasts(int(weather['current']['time'][11:13]), weather['hourly'])
+main_screen.status.update_time(weather['current']['time'])
 display.refresh()
 ptest = 4
 ftest = (
@@ -113,7 +105,6 @@ COLORS = [
 
 # Loop forever so you can enjoy your image
 press_time = None
-
 while True:
 
     keyevent = key.events.get()
