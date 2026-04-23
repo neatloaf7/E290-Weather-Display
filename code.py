@@ -1,110 +1,87 @@
 import os
 import board
 import displayio
-import digitalio
 import terminalio
-import neopixel
+import supervisor
 import keypad
 import wifi
 import time
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
 from adafruit_display_shapes import line
-from classes import ForecastWidget, MainScreen
+from classes import MainScreen, Pixel, ForecastScreen, OtherScreen
 import adafruit_requests
 import adafruit_connection_manager
 import utils
 
+def ensure_wifi(pixel):
+    if not wifi.radio.connected:
+        print("WiFi lost. Reconnecting...")
+        pixel.set(color=pixel.RED)
+        try:
+            wifi.radio.connect(ssid=os.getenv('CIRCUITPY_WIFI_SSID'),
+                   password=os.getenv('CIRCUITPY_WIFI_PASSWORD'))
+            print("Reconnected!")
+            pixel.set(color=pixel.GREEN)
+        except Exception as e:
+            print(f"Wifi Connection failed: {e}")
+            pixel.set(color=pixel.RED)
+            return False
+    return True
+
+pixel = Pixel()
+pixel.set(color=pixel.RED)
+print("Connecting to WiFi...")
 wifi.radio.connect(ssid=os.getenv('CIRCUITPY_WIFI_SSID'),
                    password=os.getenv('CIRCUITPY_WIFI_PASSWORD'))
-print(f"Connected to {wifi.radio.ipv4_address} !")
+print(f"Connected at {wifi.radio.ipv4_address}!")
+pixel.set(color=pixel.YELLOW)
 
 pool = adafruit_connection_manager.get_radio_socketpool(wifi.radio)
-
 requests = adafruit_requests.Session(pool)
-weather = utils.get_weather(requests)
-print(f"{weather['latitude']}")
 
 #initialize display and main displayio group
 display = board.DISPLAY
-splash = displayio.Group()
-
-BLACK = 0x000000
 
 #import fonts
 font0 = terminalio.FONT #small
 font1 = bitmap_font.load_font("/fonts/Ari-W9500-11.bdf")
 font2 = bitmap_font.load_font("fonts/UAV-OSD-Mono-14.bdf")
 
-#Create 12 pt font labels (currently temp and humidity)
-
-#Create white background
-background_bitmap = displayio.Bitmap(296, 128, 1)
-palette = displayio.Palette(1)
-palette[0] = 0xFFFFFF
-
-# Create a Tilegrid with the background and put in the displayio group
-t = displayio.TileGrid(background_bitmap, pixel_shader=palette)
-splash.append(t)
-
+#screens
 main_screen = MainScreen(font1,font2)
+forecast_screen = ForecastScreen(font1)
+other_screen = OtherScreen(font1, font2)
+screens = [main_screen, forecast_screen, other_screen]
 
-#append labels
-splash.append(main_screen.group)
+screen_idx = 0
 
+display.root_group = screens[screen_idx].group
 
-# Show it
-display.root_group = splash
+weather = utils.get_weather(requests, pixel)
 
-main_screen.main_block.update(int(weather['current']['is_day']),
-                    7,
-                    int(weather['current']['temperature_2m']), 
-                    int(weather['daily']['temperature_2m_max'][0]), 
-                    int(weather['daily']['temperature_2m_min'][0]),
-                    int(weather['daily']['precipitation_probability_max'][0]),
-                    int(weather['current']['relative_humidity_2m']),
-)
+if weather is not None:
+    screens[0].update(weather['current'], weather['daily'], weather['hourly'])
 
-main_screen.update_forecasts(int(weather['current']['time'][11:13]), weather['hourly'])
-main_screen.status.update_time(weather['current']['time'])
+time.sleep(1)
 display.refresh()
-ptest = 4
-ftest = (
-    "hello \n"
-    f"this is" 
-    f"a test"
-    )
-
-print(ftest)
+last_refresh = time.monotonic()
 
 key = keypad.KeyMatrix(
         row_pins=(board.IO41,),
         column_pins=(board.IO17,),
         columns_to_anodes=False
 )
-#col = digitalio.DigitalInOut(board.IO17)
-#col.direction = digitalio.Direction.OUTPUT
-#col.value = False
 
-#row = digitalio.DigitalInOut(board.IO41)
-#row.direction = digitalio.Direction.INPUT
-#row.pull = digitalio.Pull.UP
+THRESHOLDS = [(0, pixel.ORANGE), (1, pixel.YELLOW), 
+              (2, pixel.GREEN), (4, pixel.RED),
+              (7, pixel.WHITE)]
 
-pixel = neopixel.NeoPixel(board.IO45, 1, brightness=0.3)
-
-COLORS = [
-        (0.0, (255,0,0)),
-        (1.0, (255,255,0)),
-        (2.0, (0,255,0)),
-        (5.0, (255,0,0)),
-]
-
-
-#button = digitalio.DigitalInOut(board.BUTTON0)
-#button.pull = digitalio.Pull.UP
-
-# Loop forever so you can enjoy your image
 press_time = None
+pixel_timeout = 2
+refresh_wait = 3
+reset_duration = 60
+
 while True:
 
     keyevent = key.events.get()
@@ -113,28 +90,73 @@ while True:
         print({keyevent})
         
         if keyevent.pressed:
-            pixel.fill((0,0,255))
             press_time = time.monotonic()
-            
+
         if keyevent.released:
-            pixel.fill((0,0,0))
+            pixel.off()
+
+            #check if ready for update, otherwise do nothing
+            if press_time - last_refresh > refresh_wait:
+                duration = time.monotonic() - press_time
+
+                #reboot on long hold
+                if duration >= 7:
+                    supervisor.reload()
+                #do nothing if held between 4 and 7 seconds
+                #refresh if held between 2 and 4 seconds
+                elif 2 <= duration <4:
+                    if ensure_wifi(pixel):
+                        weather = utils.get_weather(requests, pixel)
+                    if weather is not None:
+                        screens[screen_idx].update(weather['current'],
+                                                weather['daily'], 
+                                                    weather['hourly'])
+                        display.refresh()
+                        last_refresh = time.monotonic()
+                #do nothing if held between 1 and 2 seconds
+                #go to next screen if held less than 1 second
+                elif duration < 1:
+                    screen_idx = (screen_idx + 1) % len(screens)
+                    if ensure_wifi(pixel):
+                        weather = utils.get_weather(requests, pixel)
+                    if weather is not None:
+                        screens[screen_idx].update(weather['current'],
+                                                    weather['daily'], 
+                                                    weather['hourly'])
+                    display.root_group = screens[screen_idx].group
+                    display.refresh()
+                    last_refresh = time.monotonic()
+
             press_time = None
 
+    #colors
     if press_time is not None:
-        duration = time.monotonic() - press_time
+        if press_time - last_refresh > refresh_wait:
+            pixel_hold = time.monotonic() - press_time
 
-        current_color = (0,0,0)
-        for threshold, color in COLORS:
-            if duration >= threshold:
-                current_color = color
+            for threshold, color in THRESHOLDS:
+                if pixel_hold >= threshold:
+                    current_color = color
+            
+            pixel.set(color=current_color)
         
-        pixel.fill(current_color)
-              
-    #if row.value == 1:
-    #    print("1")
-    #    pixel.fill((0,0,0))
-    #else:
-    #    print("0")
-    #    pixel.fill((0,255,0))
+        else:
+            pixel.set(color=pixel.RED)
+
+    if screen_idx is not 0:
+        if time.monotonic() - last_refresh > reset_duration:
+            weather = utils.get_weather(requests, pixel)
+            screen_idx = 0
+            screens[screen_idx].update(weather['current'],
+                                        weather['daily'], 
+                                        weather['hourly'])
+            display.root_group = screens[screen_idx].group
+            display.refresh()
+            last_refresh = time.monotonic()
+        
+    pixel_dt = time.monotonic() - pixel.last_set
+    if pixel_dt > pixel_timeout:
+        pixel.off()
 
     pass
+
