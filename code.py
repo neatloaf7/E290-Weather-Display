@@ -6,13 +6,11 @@ import keypad
 import wifi
 import time
 import alarm
-import displayio
 from adafruit_bitmap_font import bitmap_font
 from classes import MainScreen, Pixel, ForecastScreen, OtherScreen
 import adafruit_requests
 import adafruit_connection_manager
 import utils
-import digitalio
 import analogio
 
 def ensure_wifi(pixel):

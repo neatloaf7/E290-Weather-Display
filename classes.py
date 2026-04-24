@@ -8,7 +8,6 @@ import neopixel
 import board
 from adafruit_display_shapes import line, arc
 from adafruit_display_text import label
-from adafruit_bitmap_font import bitmap_font
 import wifi
 
 BLACK = 0x000000
