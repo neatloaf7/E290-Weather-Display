@@ -166,7 +166,7 @@ class StatusBar:
     #tuples for date formatting
     WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
-    BATTERY = [(3.2, 0), (3.6, 1), (3.8, 2), (4, 3), (4.1, 5)]
+    BATTERY = [(3.2, 0), (3.6, 1), (3.8, 2), (4, 3), (4.1, 4)]
 
     def __init__(self):
         #make label

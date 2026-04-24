@@ -212,6 +212,7 @@ while True:
         
         else:
             pixel.set(color=pixel.RED)
+        last_action = time.monotonic()
         
     pixel_dt = time.monotonic() - pixel.last_set
     if pixel_dt > pixel_timeout:
