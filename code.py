@@ -2,6 +2,7 @@ import os
 import board
 import terminalio
 import supervisor
+import microcontroller
 import keypad
 import wifi
 import time
@@ -140,7 +141,7 @@ deep_sleep_time = 3600
 
 THRESHOLDS = [(0, pixel.ORANGE), (1, pixel.YELLOW), 
               (2, pixel.GREEN), (4, pixel.RED),
-              (7, pixel.WHITE)]
+              (7, pixel.WHITE), (10, pixel.YELLOW)]
 
 
 
@@ -163,7 +164,8 @@ while True:
                 duration = time.monotonic() - press_time
 
                 #reboot on long hold
-                if duration >= 7:
+                if duration >= 10:
+                elif 7 <= duration <= 10:
                     supervisor.reload()
                 #do nothing if held between 4 and 7 seconds
                 #refresh if held between 2 and 4 seconds

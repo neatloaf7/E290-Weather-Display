@@ -212,7 +212,7 @@ class StatusBar:
 
         #Last update time label
         self.time.text = (f"{self.WEEKDAYS[self.weekday_idx]},"
-                        f" {self.day} {self.MONTHS[int(self.month)]}"
+                        f" {self.day} {self.MONTHS[int(self.month)-1]}"
                         f" {self.year} {self.hour}:{self.minute}")
         
     def update_bat(self, bat_v):
