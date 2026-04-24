@@ -159,8 +159,6 @@ class ForecastWidget:
         self.humi.text = f"{humi}%"
         self.time.text = f"{hour}:00"
 
-
-
 class StatusBar:
     #tuples for date formatting
     WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
@@ -380,6 +378,7 @@ class Pixel:
     YELLOW = (255, 255, 0)
     GREEN = (0, 255, 0)
     WHITE = (255, 255, 255)
+    BLUE = (0, 0, 255)
     OFF = (0,0,0)
 
     def __init__(self):

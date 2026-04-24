@@ -24,7 +24,7 @@ def ensure_wifi(pixel):
             pixel.set(color=pixel.GREEN)
         except Exception as e:
             print(f"Wifi Connection failed: {e}")
-            pixel.set(color=pixel.RED)
+            pixel.set(color=pixel.BLUE)
             return False
     return True
 
@@ -133,7 +133,7 @@ last_refresh = time.monotonic()
 press_time = None
 pixel_timeout = 2
 refresh_wait = 3
-light_timeout = 5
+light_timeout = 10
 last_action = time.monotonic()
 light_sleep_time = 60
 deep_sleep_time = 3600
@@ -159,7 +159,7 @@ while True:
             pixel.off()
 
             #check if ready for update, otherwise do nothing
-            if press_time - last_refresh > refresh_wait:
+            if press_time is not None and press_time - last_refresh > refresh_wait:
                 duration = time.monotonic() - press_time
 
                 #reboot on long hold
@@ -213,8 +213,9 @@ while True:
         last_action = time.monotonic()
         
     pixel_dt = time.monotonic() - pixel.last_set
-    if pixel_dt > pixel_timeout:
-        pixel.off()
+    if not pixel.is_off:
+        if pixel_dt > pixel_timeout:
+            pixel.off()
 
 #sleep timer
     if time.monotonic() - last_action > light_timeout:
