@@ -1,0 +1,3 @@
+CIRCUITPY_WIFI_SSID = "coolwifi"
+CIRCUITPY_WIFI_PASSWORD = "coolpassword"
+URL = "http://api.open-meteo.com/v1/forecast?latitude=32.7674&longitude=-117.1723&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,is_day&current=temperature_2m,relative_humidity_2m,is_day,weather_code&timezone=America%2FLos_Angeles&past_days=0&forecast_days=1&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch"
