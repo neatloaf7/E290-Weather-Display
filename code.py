@@ -163,9 +163,11 @@ while True:
             if press_time is not None and press_time - last_refresh > refresh_wait:
                 duration = time.monotonic() - press_time
 
-                #reboot on long hold
-                if duration >= 10:
-                elif 7 <= duration <= 10:
+                #hard reset longest hold, soft reboot long hold
+                if duration >=10:
+                    microcontroller.reset()
+
+                elif 7 <= duration < 10:
                     supervisor.reload()
                 #do nothing if held between 4 and 7 seconds
                 #refresh if held between 2 and 4 seconds
@@ -184,8 +186,6 @@ while True:
                 #go to next screen if held less than 1 second
                 elif duration < 1:
                     screen_idx = (screen_idx + 1) % len(screens)
-                    if ensure_wifi(pixel):
-                        weather = utils.get_weather(requests, pixel)
                     if weather is not None:
                         screens[screen_idx].update(weather['current'],
                                                     weather['daily'], 
