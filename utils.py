@@ -29,3 +29,6 @@ def get_weather(requests, pixel):
     except Exception as e:
         print(f"Exception: {e}")
         pixel.set(color=pixel.RED)
+
+def get_voltage(bat):
+    return bat.value/65536*3.3*4.9

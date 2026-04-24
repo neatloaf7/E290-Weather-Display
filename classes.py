@@ -2,7 +2,7 @@ import displayio
 import terminalio
 import utils
 from bmps import (prec, humi, bmp48, bmp72, sunrise, sunset,
-                  bmp_background, background_palette, wind)
+                  bmp_background, background_palette, wind, bats)
 import time
 import neopixel
 import board
@@ -166,6 +166,7 @@ class StatusBar:
     #tuples for date formatting
     WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     MONTHS = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+    BATTERY = [(3.2, 0), (3.6, 1), (3.8, 2), (4, 3), (4.1, 5)]
 
     def __init__(self):
         #make label
@@ -177,12 +178,25 @@ class StatusBar:
 
         #Location Label
         self.loc = label.Label(terminalio.FONT, text = "San Diego, CA", color=BLACK, x=0, y=4)
+
+        #battery
+        self.bat_icon = displayio.TileGrid(
+                                            bats,
+                                            pixel_shader=bats.pixel_shader,
+                                            width=1,
+                                            height=1,
+                                            tile_width=12,
+                                            tile_height=12,
+                                            x=285, y=-2)
+
+        #topbar
         self.topbar  = line.Line(x0=0, x1=295, y0=11, y1=11, color=BLACK)
 
         #Group
         self.group = displayio.Group()
         self.group.append(self.time)
         self.group.append(self.loc)
+        self.group.append(self.bat_icon)
         self.group.append(self.topbar)
 
     def update_time(self, iso_str):
@@ -203,6 +217,11 @@ class StatusBar:
         self.time.text = (f"{self.WEEKDAYS[self.weekday_idx]},"
                         f" {self.day} {self.MONTHS[int(self.month)]}"
                         f" {self.year} {self.hour}:{self.minute}")
+        
+    def update_bat(self, bat_v):
+        for voltage, idx in self.BATTERY:
+            if bat_v >= voltage:
+                self.bat_icon[0] = idx
 
 class MainScreen:
     def __init__(self, font0, font1):
@@ -224,10 +243,11 @@ class MainScreen:
             self.forecasts.append(w)
             self.group.append(w.group)
 
-    def update(self, current_data, daily_data, hourly_data):
+    def update(self, current_data, daily_data, hourly_data, bat_v):
         
         self.main_block.update(current_data, daily_data)
         self.status.update_time(current_data['time'])
+        self.status.update_bat(bat_v)
 
         hour = int(current_data['time'][11:13])
         
@@ -260,8 +280,9 @@ class ForecastScreen:
             self.forecasts.append(w)
             self.group.append(w.group)
 
-    def update(self, current_data, daily_data, hourly_data):
+    def update(self, current_data, daily_data, hourly_data, bat_v):
         self.status.update_time(current_data['time'])
+        self.status.update_bat(bat_v)
 
         hour = int(current_data['time'][11:13])
         
@@ -342,7 +363,7 @@ class OtherScreen:
                               color=BLACK)
         self.group.append(self.ip)
 
-    def update(self, current_data, daily_data, hourly_data):
+    def update(self, current_data, daily_data, hourly_data, bat_v):
         
         self.main_block.update(current_data, daily_data)
         self.status.update_time(current_data['time'])
@@ -351,6 +372,7 @@ class OtherScreen:
         self.wind.text = f"{daily_data['wind_speed_10m_max'][0]} / {daily_data['wind_gusts_10m_max'][0]} mph"
         self.feels.text = f"Feels like: {int(current_data['apparent_temperature'])}°F"
         self.uv.text = f"UV Index: {daily_data['uv_index_max'][0]}"
+        self.status.update_bat(bat_v)
 
 class Pixel:
 
@@ -365,6 +387,7 @@ class Pixel:
         self.pixel = pixel = neopixel.NeoPixel(board.IO45, 1, brightness=0.3)
         self.pixel.fill(self.OFF)
         self.last_set = time.monotonic()
+        self.is_off = True
 
     def set(self, color=None, brightness=None):
         if color is not None:
@@ -373,6 +396,7 @@ class Pixel:
         if brightness is not None:
             self.pixel.brightness = brightness
         
+        self.is_off = False
         self.last_set = time.monotonic()
     
     def off(self):
