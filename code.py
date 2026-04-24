@@ -31,7 +31,7 @@ def ensure_wifi(pixel):
     return True
 
 def sleep_handler():
-    global screen_idx, last_action, last_refresh, press_time, key, weather
+    global screen_idx, last_action, last_refresh, press_time, key, weather, bat
     #light sleep
     print("sleepin")
     key.deinit()
@@ -63,7 +63,8 @@ def sleep_handler():
             if weather is not None:
                 screens[screen_idx].update(weather['current'],
                                     weather['daily'], 
-                                    weather['hourly'])
+                                    weather['hourly'],
+                                    utils.get_voltage(bat))
             
             display.root_group = screens[screen_idx].group
             display.refresh()
