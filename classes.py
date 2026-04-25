@@ -1,8 +1,7 @@
 import displayio
 import terminalio
 import utils
-from bmps import (prec, humi, bmp48, bmp72, sunrise, sunset,
-                  bmp_background, background_palette, wind, bats)
+import bmps
 import time
 import neopixel
 import board
@@ -21,8 +20,8 @@ class MainBlock:
 
         #main icon setup
         self.main_icon = displayio.TileGrid(
-                                 bmp72, 
-                                 pixel_shader=bmp72.pixel_shader,
+                                 bmps.get_bmp72(), 
+                                 pixel_shader=bmps.get_bmp72().pixel_shader,
                                  width = 1,
                                  height = 1,
                                  tile_width=72,
@@ -53,8 +52,8 @@ class MainBlock:
 
         #precipitation setup
         self.prec_icon = displayio.TileGrid(
-                            prec,
-                            pixel_shader=prec.pixel_shader,
+                            bmps.get_prec(),
+                            pixel_shader=bmps.get_prec().pixel_shader,
                             x=5,y=107
                         )
         self.prec_label = label.Label(self.fontmain, text = "--%", color=BLACK)
@@ -67,8 +66,8 @@ class MainBlock:
 
         #humidity setup
         self.humi_icon = displayio.TileGrid(
-                            humi,
-                            pixel_shader=humi.pixel_shader,
+                            bmps.get_humi(),
+                            pixel_shader=bmps.get_humi().pixel_shader,
                             x=50,y=110
                         )
         self.humi_label = label.Label(self.fontmain, text = "--%", color=BLACK)
@@ -108,12 +107,12 @@ class MainBlock:
         self.humi_label.text = f"{current['relative_humidity_2m']}%"
 
 class ForecastWidget:
-    def __init__(self, font, x, bmp48):
+    def __init__(self, font, x):
         self.group = displayio.Group(x=x, y=0)
         self.font = font or terminalio.FONT
         self.icon = displayio.TileGrid(
-                                 bmp48, 
-                                 pixel_shader=bmp48.pixel_shader,
+                                 bmps.get_bmp48(), 
+                                 pixel_shader=bmps.get_bmp48().pixel_shader,
                                  width=1,
                                  height=1,
                                  tile_width=48,
@@ -128,14 +127,14 @@ class ForecastWidget:
 
         self.prec = label.Label(self.font, text="--%", x=15, y=102, color=BLACK)
         self.prec_icon = displayio.TileGrid(
-                            prec,
-                            pixel_shader=prec.pixel_shader,
+                            bmps.get_prec(),
+                            pixel_shader=bmps.get_prec().pixel_shader,
                             x=-8,y=88)
 
         self.humi = label.Label(self.font, text="--%", x=15, y=120, color=BLACK)
         self.humi_icon = displayio.TileGrid(
-                            humi,
-                            pixel_shader=humi.pixel_shader,
+                            bmps.get_humi(),
+                            pixel_shader=bmps.get_humi().pixel_shader,
                             x=-6,y=108
                         )              
 
@@ -178,8 +177,8 @@ class StatusBar:
 
         #battery
         self.bat_icon = displayio.TileGrid(
-                                            bats,
-                                            pixel_shader=bats.pixel_shader,
+                                            bmps.get_bats(),
+                                            pixel_shader=bmps.get_bats().pixel_shader,
                                             width=1,
                                             height=1,
                                             tile_width=12,
@@ -223,9 +222,9 @@ class StatusBar:
 class MainScreen:
     def __init__(self, font0, font1):
         self.group = displayio.Group()
-        
-        background = displayio.TileGrid(bmp_background,
-                                        pixel_shader=background_palette)
+        print(f"{bmps.get_background}")
+        background = displayio.TileGrid(bmps.get_background()[0],
+                                        pixel_shader=bmps.get_background()[1])
         self.group.append(background)
         
         self.status = StatusBar()
@@ -236,7 +235,7 @@ class MainScreen:
 
         self.forecasts = []
         for i in range(3):
-            w = ForecastWidget(font0, 120 + i*60, bmp48)
+            w = ForecastWidget(font0, 120 + i*60)
             self.forecasts.append(w)
             self.group.append(w.group)
 
@@ -264,8 +263,8 @@ class ForecastScreen:
     def __init__ (self, font):
         self.group = displayio.Group()
 
-        background = displayio.TileGrid(bmp_background,
-                                pixel_shader=background_palette)
+        background = displayio.TileGrid(bmps.get_background()[0],
+                                pixel_shader=bmps.get_background()[1])
         self.group.append(background)
 
         self.status = StatusBar()
@@ -273,7 +272,7 @@ class ForecastScreen:
 
         self.forecasts =[]
         for i in range(5):
-            w = ForecastWidget(font, 5+i*60, bmp48)
+            w = ForecastWidget(font, 5+i*60)
             self.forecasts.append(w)
             self.group.append(w.group)
 
@@ -298,8 +297,8 @@ class OtherScreen:
     def __init__(self, font0, font1):
         self.group = displayio.Group()
 
-        background = displayio.TileGrid(bmp_background,
-                                pixel_shader=background_palette)
+        background = displayio.TileGrid(bmps.get_background()[0],
+                                pixel_shader=bmps.get_background()[1])
         self.group.append(background)
 
         self.status = StatusBar()
@@ -309,15 +308,15 @@ class OtherScreen:
         self.group.append(self.main_block.group)
 
         self.sunrise_icon = displayio.TileGrid(
-                                                sunrise,
-                                                pixel_shader=sunrise.pixel_shader,
+                                                bmps.get_sunrise(),
+                                                pixel_shader=bmps.get_sunrise().pixel_shader,
                                                 x=102,
                                                 y=88
                                                 )
         
         self.sunset_icon = displayio.TileGrid(
-                                                sunset,
-                                                pixel_shader=sunset.pixel_shader,
+                                                bmps.get_sunset(),
+                                                pixel_shader=bmps.get_sunset().pixel_shader,
                                                 x=162,
                                                 y=88
                                                 )
@@ -337,8 +336,8 @@ class OtherScreen:
         self.group.append(self.sun_line)
 
         self.wind_icon = displayio.TileGrid(
-                                            wind,
-                                            pixel_shader=wind.pixel_shader,
+                                            bmps.get_wind(),
+                                            pixel_shader=bmps.get_wind().pixel_shader,
                                             x = 101,
                                             y = 15
                                         )

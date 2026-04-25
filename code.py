@@ -85,6 +85,18 @@ def sleep_handler():
             print("deep sleepin")
             alarm.exit_and_deep_sleep_until_alarms(deep_alarm, pin_alarm)
 
+def load_screen(idx):
+    global screens
+
+    if screens[idx] is None:
+        if idx == 0:
+            screens[0] = MainScreen(font1,font2)
+        if idx == 1:
+            screens[1] = ForecastScreen(font1)
+        if idx == 2:
+            screens[2] = OtherScreen(font1, font2)
+    return screens[idx]
+
 #neopixel
 pixel = Pixel()
 pixel.set(color=pixel.RED)
@@ -106,11 +118,10 @@ font2 = bitmap_font.load_font("fonts/UAV-OSD-Mono-14.bdf")
 display = board.DISPLAY
 
 #screens
-main_screen = MainScreen(font1,font2)
-forecast_screen = ForecastScreen(font1)
-other_screen = OtherScreen(font1, font2)
-screens = [main_screen, forecast_screen, other_screen]
+
+screens = [None, None, None]
 screen_idx = 0
+main_screen = load_screen(0)
 display.root_group = screens[screen_idx].group
 
 #wifi
@@ -186,8 +197,9 @@ while True:
                 #go to next screen if held less than 1 second
                 elif duration < 1:
                     screen_idx = (screen_idx + 1) % len(screens)
+                    current_screen = load_screen(screen_idx)
                     if weather is not None:
-                        screens[screen_idx].update(weather['current'],
+                        current_screen.update(weather['current'],
                                                     weather['daily'], 
                                                     weather['hourly'], 
                                                     utils.get_voltage(bat))
