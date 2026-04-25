@@ -89,7 +89,7 @@ class MainBlock:
     def update(self, current, daily):
         
         row = 1 - int(current['is_day'])
-        col = int(current['weather_code'])
+        col = utils.wmo_handler(int(current['weather_code']))
         #if wmo == 69-70:
         #    disaster = True
         #col = wmotable[wmo]
@@ -250,7 +250,7 @@ class MainScreen:
         for i in range(3):
             idx = hour + (i+1)*2
 
-            wmo = hourly_data['weather_code'][idx]
+            wmo = utils.wmo_handler(hourly_data['weather_code'][idx])
             isday = hourly_data['is_day'][idx]
             t = int(hourly_data['temperature_2m'][idx])
             prec = hourly_data['precipitation_probability'][idx]
@@ -285,7 +285,7 @@ class ForecastScreen:
         for i in range(5):
             idx = hour + (i)*2
 
-            wmo = hourly_data['weather_code'][idx]
+            wmo = utils.wmo_handler(hourly_data['weather_code'][idx])
             isday = hourly_data['is_day'][idx]
             t = int(hourly_data['temperature_2m'][idx])
             prec = hourly_data['precipitation_probability'][idx]
